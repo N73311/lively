@@ -1,0 +1,111 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST_LIVELY }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Install .NET Core SDK if not present
+            if ! command -v dotnet &> /dev/null; then
+              sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+              sudo yum install -y dotnet-sdk-3.1
+            fi
+
+            # Install Node.js if not present
+            if ! command -v node &> /dev/null; then
+              curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
+              sudo yum install -y nodejs
+            fi
+
+            # Install and configure nginx if not present
+            if ! command -v nginx &> /dev/null; then
+              sudo yum install -y nginx
+              sudo systemctl enable nginx
+            fi
+
+            # Configure nginx for .NET reverse proxy
+            if [ ! -f /etc/nginx/conf.d/lively.conf ]; then
+              sudo tee /etc/nginx/conf.d/lively.conf > /dev/null <<'EOF'
+            server {
+                listen 80;
+                server_name _;
+
+                location / {
+                    proxy_pass http://127.0.0.1:5000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host $host;
+                    proxy_cache_bypass $http_upgrade;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
+            EOF
+              sudo systemctl restart nginx
+            fi
+
+            # Create directory and clone repo if not present
+            if [ ! -d /var/www/lively ]; then
+              sudo mkdir -p /var/www
+              cd /var/www
+              sudo git clone https://github.com/n73311/lively.git
+              sudo chown -R ec2-user:ec2-user /var/www/lively
+            fi
+
+            cd /var/www/lively
+            git pull origin master
+
+            # Build .NET application
+            cd API
+            dotnet restore
+            dotnet publish -c Release -o /var/www/lively/publish
+
+            # Build React frontend
+            cd ../client-app
+            npm ci
+            npm run build
+
+            # Create systemd service if not present
+            if [ ! -f /etc/systemd/system/lively.service ]; then
+              sudo tee /etc/systemd/system/lively.service > /dev/null <<'EOF'
+            [Unit]
+            Description=Lively ASP.NET Core App
+            After=network.target
+
+            [Service]
+            Type=notify
+            WorkingDirectory=/var/www/lively/publish
+            ExecStart=/usr/bin/dotnet /var/www/lively/publish/API.dll
+            Restart=always
+            RestartSec=10
+            KillSignal=SIGINT
+            SyslogIdentifier=lively
+            User=ec2-user
+            Environment=ASPNETCORE_ENVIRONMENT=Production
+            Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+              sudo systemctl enable lively.service
+            fi
+
+            sudo systemctl restart lively.service
+            sudo systemctl reload nginx
