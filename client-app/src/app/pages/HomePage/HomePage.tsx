@@ -34,19 +34,19 @@ const HomePage = () => {
         <Container text style={{ marginBottom: '2rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', textAlign: 'left' }}>
             <div>
-              <Header as="h4" inverted>📅 Event Management</Header>
+              <Header as="h4" inverted><span role="img" aria-label="calendar">📅</span> Event Management</Header>
               <p style={{ opacity: 0.85 }}>Create and manage social events with detailed information and attendee tracking</p>
             </div>
             <div>
-              <Header as="h4" inverted>💬 Live Chat</Header>
+              <Header as="h4" inverted><span role="img" aria-label="chat">💬</span> Live Chat</Header>
               <p style={{ opacity: 0.85 }}>Real-time messaging with SignalR WebSocket connections</p>
             </div>
             <div>
-              <Header as="h4" inverted>🔔 Activity Feed</Header>
+              <Header as="h4" inverted><span role="img" aria-label="bell">🔔</span> Activity Feed</Header>
               <p style={{ opacity: 0.85 }}>Stay updated with live notifications and event updates</p>
             </div>
             <div>
-              <Header as="h4" inverted>👥 User Profiles</Header>
+              <Header as="h4" inverted><span role="img" aria-label="people">👥</span> User Profiles</Header>
               <p style={{ opacity: 0.85 }}>Manage your profile, follow others, and track your events</p>
             </div>
           </div>
