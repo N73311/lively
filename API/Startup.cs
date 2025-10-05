@@ -45,9 +45,9 @@ namespace API
 
             services.AddDbContext<DataContext>(opt =>
             {
-                // Setup lazy loading proxies
-                opt.UseLazyLoadingProxies();
-                opt.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+                // Use in-memory database for containerized deployment
+                opt.UseInMemoryDatabase("LivelyMemoryDB");
+                // Note: Lazy loading proxies not supported with in-memory database
             });
 
             // Add SignalR
@@ -99,7 +99,8 @@ namespace API
             services.AddTransient<IAuthorizationHandler, IsHostAuthRequirementHandler>();
 
             // Setup JWT Token Authentication
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+            var tokenKey = Configuration["TokenKey"] ?? "super-secret-key-for-development-only-not-for-production-use";
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey));
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
             {
@@ -142,13 +143,8 @@ namespace API
             services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
 
-            // Setup Facebook login
-            services.Configure<FacebookAppSettings>(Configuration.GetSection("Authentication:Facebook"));
-            services.AddScoped<IFacebookAccessor, FacebookAccessor>();
-
-            // Setup SendGrid
-            services.Configure<SendGridSettings>(Configuration.GetSection("SendGrid"));
-            services.AddScoped<IEmailSender, EmailSender>();
+            // Setup Email Service - AWS SES
+            services.AddScoped<IEmailSender, AwsSesEmailSender>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

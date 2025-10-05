@@ -8,8 +8,6 @@ export const usersApi = {
     requests.post("/user/login", user),
   register: (user: IUserFormValues): Promise<IUser> =>
     requests.post("/user/register", user),
-  fbLogin: (accessToken: string) =>
-    requests.post(`/user/facebook`, { accessToken }),
   getRefreshToken: (): Promise<IUser> =>
     requests.post(`/user/refreshToken`, {}),
   verifyEmail: (token: string, email: string): Promise<void> =>

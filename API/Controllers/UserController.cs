@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Core.Auth;
 using Core.Dto;
-using Core.UserProfiles.Facebook;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -33,13 +32,6 @@ namespace API.Controllers
             command.Origin = Request.Headers["origin"];
             await Mediator.Send(command);
             return Ok("Registration successful - please check your email");
-        }
-
-        [AllowAnonymous]
-        [HttpPost("facebook")]
-        public async Task<ActionResult<AppUserDto>> FacebookLogin(ExternalLogin.Query query)
-        {
-            return await SendToMediatorAndReturnUser(query);
         }
 
         [HttpPost("refreshToken")]

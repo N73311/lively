@@ -2,13 +2,12 @@ import { FORM_ERROR } from "final-form";
 import React from "react";
 import { Field, Form as FinalForm } from "react-final-form";
 import { combineValidators, isRequired } from "revalidate";
-import { Button, Divider, Form, Header } from "semantic-ui-react";
+import { Button, Form, Header } from "semantic-ui-react";
 import { IUserFormValues } from "../../../../models";
 import { useAuthRedirect } from "../../../../hooks/useAuthRedirect";
 import { useUserStore } from "../../../../hooks/useUserStore";
 import { TextInput } from "../../shared";
 import ErrorLabel from "../../shared/form/ErrorLabel/ErrorLabel";
-import SocialLogin from "../SocialLogin/SocialLogin";
 
 const validate = combineValidators({
   email: isRequired("Email"),
@@ -18,7 +17,7 @@ const validate = combineValidators({
 });
 
 const RegisterForm = () => {
-  const { register, fbLogin, loadingFacebook } = useUserStore();
+  const { register } = useUserStore();
   return useAuthRedirect(
     <FinalForm
       onSubmit={(values: IUserFormValues) =>
@@ -77,8 +76,6 @@ const RegisterForm = () => {
             loading={submitting}
             content={"Register"}
           />
-          <Divider horizontal>Or</Divider>
-          <SocialLogin fbCallback={fbLogin} loading={loadingFacebook} />
         </Form>
       )}
     />

@@ -13,7 +13,6 @@ export default class UserStore {
   // * Observables
   user: IUser | null = null;
   token: string | null = null;
-  loadingFacebook = false;
   getRefreshToken = catchAsync(async () => {
     this.stopRefreshTokenTimer();
     const user = await usersApi.getRefreshToken();
@@ -97,17 +96,6 @@ export default class UserStore {
     });
   };
 
-  fbLogin = catchAsync(
-    async (response: any) => {
-      this.loadingFacebook = true;
-      const user = await usersApi.fbLogin(response.accessToken);
-      this.setUserTokenAndContinue(user);
-      runInAction(() => {
-        this.loadingFacebook = false;
-      });
-    },
-    () => (this.loadingFacebook = false)
-  );
   login = catchAsync(async (values: IUserFormValues) => {
     const user = await usersApi.login(values);
     this.setUserTokenAndContinue(user);
